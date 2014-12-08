@@ -13,34 +13,35 @@ from pygame.locals import *
 #EX - DisplaySurface, ControllerData, Controller/Text/Font Class
 pygame.init()
 
+FPSCLOCK = pygame.time.Clock()
 DISPLAYSURF = None
-WINWIDTH = 1000
-WINHEIGHT = 1000
+WINWIDTH = 600
+WINHEIGHT = 800
 WINXCTR = WINWIDTH/2
 WINYCTR = WINHEIGHT/2
-FPS = 10  # frames per second to update the screen
-FPSCLOCK = None
+FPS = 60  # frames per second to update the screen
 CONTROLLERCOUNT = pygame.joystick.get_count()
 CONTROLLERS = []
-MAINCONT = 0
+MAINCONT = 1
 BTNDICT = {'0': 'select', '1': 'back', '2': 'options'}
 AXISDICT = {'0': 'vertMove', '1': 'horiMove', '2': 'trigger'}
 PREFFILE = open('Preferences.txt', 'r')
 PREFFILE.close()
 
-#anglosaxonrunes, floki-Hard, Gaya Z, rune_ice, RUNENG1, RUNENG2, Viking
-TESTFONT = 'anglosaxonrunes.ttf'
-TESTFONT2 = 'floki-Hard.ttf'
+#anglosaxonrunes, floki-Hard, Gaya Z, rune_ice, RUNENG1, RUNENG2, Viking, BeowulfRunic, Urnordisk
+TESTFONT = 'BeowulfRunic.ttf'
+#TESTFONT2 = 'floki-Hard.ttf'
+TESTFONT2 = 'RUNENG1.ttf'
 
-BLACK       = (0,   0,   0)
-WHITE       = (255, 255, 255)
-RED         = (50,  0,   0)
-DARKRED     = (175, 0,   0)
-GREEN       = (0,   255, 0)
-TOOLBARGREY = (50,  50,  50)
-DARKGREY    = (100, 100, 100)
-MEDGREY     = (150, 150, 150)
-LIGHTGREY   = (200, 200, 200)
+BLACK       = Color('black')
+WHITE       = Color('white')
+RED         = (50,  0,   0, 255)
+DARKRED     = (175, 0,   0, 255)
+GREEN       = (0,   255, 0, 255)
+TOOLBARGREY = (50,  50,  50, 255)
+DARKGREY    = (100, 100, 100, 255)
+MEDGREY     = (150, 150, 150, 255)
+LIGHTGREY   = (200, 200, 200, 255)
 #TODO: Angle of thumbstick input
 #TODO: Abs Distance of thumbstick input
 #TODO: Floor based on increment?!?!
@@ -71,7 +72,7 @@ class Font():
 
 
 class Text():
-    def __init__(self, someText, aFontFile, aFontSize, textColor=WHITE, bgColor=BLACK):
+    def __init__(self, someText, aFontFile, aFontSize, textColor=WHITE, bgColor=None):
         self.text = someText
         self.selected = False   #TODO: Add selected change in draw
         self.loc = [0, 0]
@@ -84,8 +85,12 @@ class Text():
 
     #Initialize fontRect
     def Setup(self):
-        self.surf = self.font.font.render(self.text, 1, self.color, self.bgColor)
-        self.surf = self.surf.convert_alpha()
+        if self.bgColor is not None:
+            self.surf = self.font.font.render(self.text, 1, self.color, self.bgColor).convert()
+        else:
+            self.surf = self.font.font.render(self.text, 0, self.color).convert()
+
+        self.surf.set_alpha(255)
         self.rect = self.surf.get_rect()
 
     #Draws border if selected, else just output to DisplaySurf
@@ -100,11 +105,3 @@ class Text():
 
     def ChangeAlpha(self, aVal):
         self.surf.set_alpha(aVal)
-
-
-#mainMenuTtlFont = Font(70, 'celticmd2.ttf')
-#mainMenuTtlText = Text('Bodulfr', mainMenuTtlFont, WHITE, BLACK):
-#mainMenuTtlText.fontRect.Top = 100
-#mainMenuTtlText.fontRect.centerx = WINXCTR
-
-

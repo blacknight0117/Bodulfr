@@ -40,7 +40,6 @@ def main():
     pygame.init()
 
     Vars.DISPLAYSURF = pygame.display.set_mode((Vars.WINWIDTH, Vars.WINHEIGHT))
-
     Vars.FPSCLOCK = pygame.time.Clock()
 
     SplashScreen()

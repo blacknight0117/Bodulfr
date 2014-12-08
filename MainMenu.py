@@ -23,11 +23,13 @@ def main():
         manager.Input()
         toGame = manager.Update()
         manager.Draw()
+        pygame.display.update()
+        Vars.FPSCLOCK.tick(Vars.FPS)
 
 
 class MainMenuState():
     def __init__(self):
-        self.state = None
+        self.state = FrontState()
         self.buttons = []
         self.axes = []
         self.hats = []
@@ -50,7 +52,7 @@ class MainMenuState():
             elif event.type == JOYBUTTONDOWN:
                 if event.joy == Vars.MAINCONT:
                     if event.button == 0:           # a button
-                        self.state.Select()
+                        self.state = self.state.Select()
                     elif event.button == 1:         # b button
                         self.state.Back()
             elif event.type == JOYHATMOTION:
@@ -78,7 +80,8 @@ class MainMenuState():
 #New Game, Continue, Options, Settings, Extra
 class FrontState():
     def __init__(self):
-        self.titleText = Vars.Text('Bodulfr', Vars.TESTFONT, 30)
+        self.titleString = 'Bodulfr'
+        self.titleText = []
         self.menuText = []
         self.highlight = -1
         self.entering = True
@@ -87,13 +90,49 @@ class FrontState():
         self.Setup()
 
     def Setup(self):
-        self.menuText = [Vars.Text('New Game', Vars.TESTFONT2, 20),
-                         Vars.Text('Continue', Vars.TESTFONT2, 20),
-                         Vars.Text('Options', Vars.TESTFONT2, 20),
-                         Vars.Text('Settings', Vars.TESTFONT2, 20),
-                         Vars.Text('Extras', Vars.TESTFONT2, 20)]
+        self.menuText = [Vars.Text('New Game', Vars.TESTFONT2, 30, Vars.WHITE, Vars.BLACK),
+                         Vars.Text('Continue', Vars.TESTFONT2, 30, Vars.WHITE, Vars.BLACK),
+                         Vars.Text('Options', Vars.TESTFONT2, 30, Vars.WHITE, Vars.BLACK),
+                         Vars.Text('Settings', Vars.TESTFONT2, 30, Vars.WHITE, Vars.BLACK),
+                         Vars.Text('Extras', Vars.TESTFONT2, 30, Vars.WHITE, Vars.BLACK)]
+        temp1 = []
+        temp2 = []
+        for char in self.titleString:
+            temp1.append(Vars.Text(char, Vars.TESTFONT, 90, Vars.WHITE, Vars.BLACK))
+            temp2.append(Vars.Text(char, Vars.TESTFONT2, 70, Vars.WHITE, Vars.BLACK))
+        self.titleText.append(temp1)
+        self.titleText.append(temp2)
+        self.titleText[0][3].rect.centerx = Vars.WINXCTR
+        self.titleText[1][3].rect.centerx = Vars.WINXCTR
+        for i in range(2, -1, -1):
+            if self.titleText[0][i+1].rect.left < self.titleText[1][i+1].rect.left:
+                self.titleText[0][i].rect.right = self.titleText[0][i+1].rect.left
+                self.titleText[1][i].rect.right = self.titleText[0][i+1].rect.left
+            else:
+                self.titleText[0][i].rect.right = self.titleText[1][i+1].rect.left
+                self.titleText[1][i].rect.right = self.titleText[1][i+1].rect.left
+        for i in range(4, 7, 1):
+            if self.titleText[0][i-1].rect.right > self.titleText[1][i-1].rect.right:
+                self.titleText[0][i].rect.left = self.titleText[0][i-1].rect.right
+                self.titleText[1][i].rect.left = self.titleText[0][i-1].rect.right
+            else:
+                self.titleText[0][i].rect.left = self.titleText[1][i-1].rect.right
+                self.titleText[1][i].rect.left = self.titleText[1][i-1].rect.right
+        for i in range(7):
+            self.titleText[1][i].ChangeAlpha(0)
+            self.titleText[0][i].rect.centery = Vars.WINYCTR
+            self.titleText[1][i].rect.centery = 150
+
+        for i in range(len(self.menuText)):
+            self.menuText[i].surf.set_alpha(0)
+            self.menuText[i].rect.left = (Vars.WINXCTR/2)
+            if i == 0:
+                self.menuText[i].rect.top = 300
+            else:
+                self.menuText[i].rect.top = self.menuText[i-1].rect.bottom+10
 
     def Select(self):
+        print('Select')
         if 4 >= self.highlight >= 0:
             if self.highlight == 0:
                 return tempState()      # NewGameState
@@ -116,45 +155,52 @@ class FrontState():
         pass
 
     def Up(self):
+        print('Up')
         if self.highlight > 0:
             self.highlight -= 1
 
     def Dn(self):
+        print('Down')
         if self.highlight < 4:
             self.highlight += 1
 
     def Draw(self):
-        self.titleText.Draw()
+        #self.titleTemp.Draw()
+        for i in range(7):
+            self.titleText[0][i].Draw()
+            self.titleText[1][i].Draw()
         for i in range(len(self.menuText)):
             self.menuText[i].Draw()
+        if self.highlight >= 0:
+            temp = self.menuText[self.highlight].rect
+            pygame.draw.rect(Vars.DISPLAYSURF, Vars.WHITE, (temp.left-20, temp.top, temp.width+40, 2))
+            pygame.draw.rect(Vars.DISPLAYSURF, Vars.WHITE, (temp.left-20, temp.bottom, temp.width+40, 2))
 
     def Update(self):
-        if self.timeStep > 119:
+        if self.timeStep > 239:
             self.entering = False
-        elif self.timeStep > 89:
-            step = 1
-        else:
-            step = 0
-        if self.entering and step == 0:
-            changePer = float((Vars.WINHEIGHT-100)/90)
+        if self.entering and self.timeStep < 90:
+            changePer = float((Vars.WINYCTR-150)/90)
             temp = math.floor(changePer*self.timeStep)
-            temp += Vars.WINYCTR
-            if temp > self.titleText.rect.centery:
-                self.titleText.rect.centery = temp
+            temp = Vars.WINYCTR - temp
+            if temp < self.titleText[0][0].rect.centery:
+                for i in range(7):
+                    self.titleText[0][i].rect.centery = temp
             self.timeStep += 1
-        elif self.entering and step == 1:
+        elif self.entering and self.timeStep < 120:
             changePer = float(256/30)
-            temp = math.floor(changePer*self.timeStep-90)
+            temp = math.floor(changePer*(self.timeStep-90))
             for i in range(len(self.menuText)):
                 self.menuText[i].ChangeAlpha(temp)
             self.timeStep += 1
-
-'''
-titleFont = Vars.Font('celticmd2.ttf', 70)
-        self.title = Vars.Text('Bodulfr', titleFont, Vars.WHITE, None)
-        self.title.rect.centerx = Vars.WINXCTR
-        self.title.rect.top = 100
-'''
+        elif self.entering and self.timeStep < 240:
+            changePer = float(256/120)
+            temp = math.floor(changePer*(self.timeStep-120))
+            tempB = 256-temp
+            for i in range(7):
+                self.titleText[0][i].ChangeAlpha(tempB)
+                self.titleText[1][i].ChangeAlpha(temp)
+            self.timeStep += 1
 
 
 class tempState():
