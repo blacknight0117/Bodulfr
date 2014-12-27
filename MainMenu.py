@@ -19,12 +19,16 @@ from pygame.locals import *
 def main():
     toGame = False
     manager = MainMenuState()
+    extras = ['']
+    timeStep = 0
     while not toGame:
-        manager.Input()
-        toGame = manager.Update()
+        toGame = manager.Input(extras, timeStep)
+        manager.Update()
         manager.Draw()
         pygame.display.update()
         Vars.FPSCLOCK.tick(Vars.FPS)
+        timeStep += 1
+    return extras[0]
 
 
 class MainMenuState():
@@ -33,7 +37,6 @@ class MainMenuState():
         self.buttons = []
         self.axes = []
         self.hats = []
-        self.entering = True
         self.Setup()
 
     def Setup(self):
@@ -43,19 +46,30 @@ class MainMenuState():
         for i in range(Vars.CONTROLLERS[Vars.MAINCONT].get_numaxes()):
             self.axes.append(Vars.CONTROLLERS[Vars.MAINCONT].get_axis(i))
 
-    def Input(self):
+    def Input(self, byRef, timeStep):
         for event in pygame.event.get():
-            if self.entering:
+            if self.state.name == 'front' and self.state.entering:
+                print('entering, no input allowed')
                 pass
-            if event.type == QUIT:
+            elif event.type == QUIT:
+                #print(event.type)
                 Main.Terminate()
             elif event.type == JOYBUTTONDOWN:
+                #print(event.type)
                 if event.joy == Vars.MAINCONT:
+                    #print(str(event.joy) + str(event.button))
                     if event.button == 0:           # a button
-                        self.state = self.state.Select()
+                        temp = self.state.Select()
+                        if temp == 'dev':
+                            byRef[0] = 'dev'
+                            return True
                     elif event.button == 1:         # b button
                         self.state.Back()
+                    elif event.button == 3:         # y button
+                        if self.state.name == 'front':
+                            self.state.Developer()
             elif event.type == JOYHATMOTION:
+                #print(event.type)
                 if event.joy == Vars.MAINCONT:
                     if event.hat == 0:
                         if event.value[0] == 1:     # Hat right
@@ -66,6 +80,18 @@ class MainMenuState():
                             self.state.Up()
                         elif event.value[1] == -1:  # Hat Down
                             self.state.Dn()
+            elif event.type == JOYAXISMOTION:
+                #print(event.joy)
+                #0,1 - 3,4
+                #0 leftx -1=left,1=right
+                #1 lefty -1=top,1=bot
+                #3 righty -1=top,1=bot
+                #4 rightx -1=left,1=right
+                #print(str(event.axis) + str(event.value))
+                pass
+            elif event.type == KEYDOWN:
+                print(event.key)
+        return False
 
     def Update(self):
         self.state.Update()
@@ -80,6 +106,7 @@ class MainMenuState():
 #New Game, Continue, Options, Settings, Extra
 class FrontState():
     def __init__(self):
+        self.name = 'front'
         self.titleString = 'Bodulfr'
         self.titleText = []
         self.menuText = []
@@ -133,17 +160,19 @@ class FrontState():
 
     def Select(self):
         print('Select')
-        if 4 >= self.highlight >= 0:
+        if 5 >= self.highlight >= 0:
             if self.highlight == 0:
                 return tempState()      # NewGameState
             elif self.highlight == 1:
                 return tempState()      # ContinueState
             elif self.highlight == 2:
-                return tempState()      # OptionState
+                return tempState()      # OptionsState
             elif self.highlight == 3:
-                return tempState()      # SettingState
+                return tempState()      # SettingsState
             elif self.highlight == 4:
-                return tempState()      # ExtraState
+                return tempState()      # ExtrasState
+            elif self.highlight == 5:   # Developer State
+                return 'dev'
 
     def Back(self):
         pass
@@ -155,13 +184,11 @@ class FrontState():
         pass
 
     def Up(self):
-        print('Up')
         if self.highlight > 0:
             self.highlight -= 1
 
     def Dn(self):
-        print('Down')
-        if self.highlight < 4:
+        if self.highlight < len(self.menuText)-1:
             self.highlight += 1
 
     def Draw(self):
@@ -176,23 +203,33 @@ class FrontState():
             pygame.draw.rect(Vars.DISPLAYSURF, Vars.WHITE, (temp.left-20, temp.top, temp.width+40, 2))
             pygame.draw.rect(Vars.DISPLAYSURF, Vars.WHITE, (temp.left-20, temp.bottom, temp.width+40, 2))
 
+    def Developer(self):
+        if len(self.menuText) < 6:
+            self.menuText.append(Vars.Text('Developer', Vars.TESTFONT2, 30, Vars.WHITE, Vars.BLACK))
+            self.menuText[5].surf.set_alpha(self.menuText[4].surf.get_alpha())
+            self.menuText[5].rect.left = (Vars.WINXCTR/2)
+            self.menuText[5].rect.top = self.menuText[4].rect.bottom+10
+
     def Update(self):
-        if self.timeStep > 239:
+        #print(self.entering)
+        if not self.entering:
+            #print('ERROR')
+            return
+        elif self.timeStep >= 240:
             self.entering = False
-        if self.entering and self.timeStep < 90:
+            return
+        elif self.entering and self.timeStep < 90:
             changePer = float((Vars.WINYCTR-150)/90)
             temp = math.floor(changePer*self.timeStep)
             temp = Vars.WINYCTR - temp
             if temp < self.titleText[0][0].rect.centery:
                 for i in range(7):
                     self.titleText[0][i].rect.centery = temp
-            self.timeStep += 1
         elif self.entering and self.timeStep < 120:
             changePer = float(256/30)
             temp = math.floor(changePer*(self.timeStep-90))
             for i in range(len(self.menuText)):
                 self.menuText[i].ChangeAlpha(temp)
-            self.timeStep += 1
         elif self.entering and self.timeStep < 240:
             changePer = float(256/120)
             temp = math.floor(changePer*(self.timeStep-120))
@@ -200,7 +237,7 @@ class FrontState():
             for i in range(7):
                 self.titleText[0][i].ChangeAlpha(tempB)
                 self.titleText[1][i].ChangeAlpha(temp)
-            self.timeStep += 1
+        self.timeStep += 1
 
 
 class tempState():

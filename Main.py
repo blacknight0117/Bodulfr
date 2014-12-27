@@ -5,12 +5,13 @@ import random
 import copy
 import os
 import sys
-import pygame
 import Vars
 import MainMenu
+import Game
+import pygame
 from pygame.locals import *
 
-#TODO Splash screen - SKIP FOR NOW
+
 #TODO Main Menu - MainMenu.py
 #TODO Options
 #TODO SinglePlayer Launch
@@ -18,7 +19,6 @@ from pygame.locals import *
 #TODO: Get example thumbstick inputs from a controller
 #       TODO: -Program Thumb Angle, Thumb Dist, Thumb Dir
 
-#needed stuff
 #Menu class
 #Popup class
 #Toolbar class
@@ -46,39 +46,44 @@ def main():
     IntroVids()
     InitConts()
 
-    MainMenu.main()
-
-    #while exitBool == 0, gameLoop keeps being looped
-    exitBool = False
-    while not exitBool:
-        pass
-        '''
-        #interactions
-        #update
-        #save/load
-        #draw
-
-            #background tiles
-            #player movement and action
-            #enemy random movement
-            #Controller Based Design
-        '''
+    extras = MainMenu.main()
+    print(extras)
+    if extras == 'dev':
+        Game.mainLoop('dev')
+    else:
+        Game.mainLoop('')
 
 
 #Splash Screen Function
 def SplashScreen():
+    #TODO Splash screen - SKIP FOR NOW
     pass
 
 
 #Intro Videos Function
 def IntroVids():
+    #TODO: INTRO VID - SKIP FOR NOW
     pass
 
 
+#Displays push a button text till a button is pushed and main cont is set
 def InitConts():
     for i in range(Vars.CONTROLLERCOUNT):
         Vars.CONTROLLERS.append(pygame.joystick.Joystick(i))
         Vars.CONTROLLERS[i].init()
+        introText = Vars.Text('Push a Button', Vars.TESTFONT2, 30, Vars.WHITE, Vars.BLACK)
+        introText.rect.center = Vars.WINXCTR, Vars.WINYCTR
+        notDone = True
+        while notDone:
+            Vars.DISPLAYSURF.fill(Vars.BLACK)
+            introText.Draw()
+            for event in pygame.event.get():
+                if event.type == JOYBUTTONDOWN:
+                    if Vars.MAINCONT == -1:
+                        Vars.MAINCONT = event.joy
+                        notDone = False
+            pygame.display.update()
+            Vars.FPSCLOCK.tick(Vars.FPS)
 
 
 #Exits program

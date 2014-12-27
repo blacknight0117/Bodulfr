@@ -22,9 +22,11 @@ WINYCTR = WINHEIGHT/2
 FPS = 60  # frames per second to update the screen
 CONTROLLERCOUNT = pygame.joystick.get_count()
 CONTROLLERS = []
-MAINCONT = 1
+MAINCONT = -1
 BTNDICT = {'0': 'select', '1': 'back', '2': 'options'}
 AXISDICT = {'0': 'vertMove', '1': 'horiMove', '2': 'trigger'}
+MOVESPEED = 10
+DIRLIMIT = 0.3
 PREFFILE = open('Preferences.txt', 'r')
 PREFFILE.close()
 
